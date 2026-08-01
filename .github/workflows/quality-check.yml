@@ -2,9 +2,9 @@ name: Quality check
 
 on:
   push:
-    branches: [ "develop", "main" ]
+    branches: [ "develop", "main", "aves-fix" ]
   pull_request:
-    branches: [ "develop", "main" ]
+    branches: [ "develop", "main", "aves-fix" ]
     types: [ opened, synchronize, reopened ]
   schedule:
     - cron: '17 8 * * 3'
@@ -70,7 +70,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@f205ea1c3313d32999d8d6a48b4f6530d4437b38 # v4.37.4
         with:
@@ -78,12 +77,20 @@ jobs:
           build-mode: ${{ matrix.build-mode }}
 
       - if: matrix.build-mode == 'manual'
+        name: Build profile APK
         shell: bash
-        # build in profile mode, instead of release,
-        # so that setting up signing environment variables is not required
+        # Build in profile mode so signing environment variables are not required.
         run: |
           scripts/apply_flavor_play.sh
           ./flutterw build apk --profile -t lib/main_play.dart --flavor play
+
+      - if: matrix.build-mode == 'manual'
+        name: Upload profile APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: aves-play-profile-apk
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@f205ea1c3313d32999d8d6a48b4f6530d4437b38 # v4.37.4
