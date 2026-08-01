@@ -19,11 +19,9 @@ class DatabasePlaybackStateHandler extends PlaybackStateHandler {
     final resumeTime = playback?.resumeTimeMillis ?? 0;
     if (resumeTime == 0) return null;
 
-    // clear on retrieval
-    await localMediaDb.removeVideoPlayback({entryId});
-
     switch (settings.videoResumptionMode) {
       case .never:
+        await localMediaDb.removeVideoPlayback({entryId});
         return 0;
       case .ask:
         final l10n = context.l10n;
@@ -33,7 +31,11 @@ class DatabasePlaybackStateHandler extends PlaybackStateHandler {
           ok: l10n.videoResumeButtonLabel,
           cancel: l10n.videoStartOverButtonLabel,
         );
-        return resume ? resumeTime : 0;
+        if (!resume) {
+          await localMediaDb.removeVideoPlayback({entryId});
+          return 0;
+        }
+        return resumeTime;
       case .always:
         return resumeTime;
     }
