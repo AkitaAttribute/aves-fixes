@@ -14,6 +14,10 @@ permissions:
 
 jobs:
   dependency-review:
+    # The dependency review API is unavailable in forks unless the dependency
+    # graph is enabled. Keep the inherited workflow for upstream, but do not
+    # fail fork PRs solely because that repository feature is unavailable.
+    if: github.repository == 'deckerst/aves'
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
